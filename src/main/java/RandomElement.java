@@ -7,10 +7,11 @@ import java.util.Random;
 public class RandomElement {
     private static List<String> elementsChecked = new LinkedList<>();
     private static Random rand;
-    private static List<WebElement> randomElementsNoRepeat(List<WebElement> givenList) {
-        List<WebElement> newElements = new LinkedList<>();
+
+    public static <T> List<T> randomElementsNoRepeat(List<T> givenList, int numberOfElements) {
+        List<T> newElements = new LinkedList<>();
         rand = new Random();
-        for (int i = 0; i < givenList.size(); i++) {
+        for (int i = 0; i < numberOfElements; i++) {
             int randomIndex = rand.nextInt(givenList.size());
             newElements.add(givenList.get(randomIndex));
             givenList.remove(randomIndex);
@@ -24,7 +25,7 @@ public class RandomElement {
     }
 
     public static WebElement randElementNoRepeat(List<WebElement> givenList){
-        List<WebElement> newElements = randomElementsNoRepeat(givenList);
+        List<WebElement> newElements = randomElementsNoRepeat(givenList, givenList.size());
         for(WebElement element : newElements){
             String name = element.getAttribute("name");
             if(isNoRepeat(name)){

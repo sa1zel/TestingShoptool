@@ -3,7 +3,6 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -56,7 +55,7 @@ public class MainClass {
                 nextElement.click();
                 wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='col-left']")));
                 List<WebElement> discount = driver.findElements(By.xpath("//div[@class='col-left']//span[contains(@id,\"price_update\")]//span[@class='ty-strike']"));
-                Assert.assertTrue(discount.size() == 1, "No element there");
+                Assert.assertEquals(discount.size(), 1, "No element there");
                 driver.navigate().back();
             }
 
@@ -161,56 +160,43 @@ public class MainClass {
 
     }
 
-    private class Item{
-        private String name;
-        private double priceChange;
-
-        public String getName() {
-            return name;
-        }
-
-        public double getPriceChange() {
-            return priceChange;
-        }
-
-        Item(String name, double priceChange){
-            this.name = name;
-            this.priceChange = priceChange;
-        }
-    }
-
     @Test
     public void fourthTest() {
         List<Item> items = new LinkedList<>();
-        String discountXPath= "//div[@id='categories_view_pagination_contents']//div[text()='Aкция']/ancestor::form";
+        String discountXPath = "//div[@id='categories_view_pagination_contents']//div[text()='Aкция']/ancestor::form";
         driver.get("https://shoptool.com.ua/");
         WebElement element = driver.findElement(By.partialLinkText("Электроинструмент"));
         actions.moveToElement(element).build().perform();
-
         driver.findElement(By.partialLinkText("Шуруповерты")).click();
         int pages = Integer.parseInt(driver.findElement(By.xpath("//div[@class='ty-pagination__items']/a[last()]")).getAttribute("data-ca-page"));
-        for(int i = 0; i < pages; i++){
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(String.format("//span[@class='ty-pagination__selected'][text()='%s']", i+1))));
-            List<WebElement> elementsName = driver.findElements(By.xpath(String.format("%s//div[@class='ut2-gl__name']",discountXPath)));
-            List<WebElement> elementsOldPrice = driver.findElements(By.xpath(String.format("%s//span[@class='ty-strike']//span[contains(@id, \"sec\")]",discountXPath)));
-            List<WebElement> elementsPrice = driver.findElements(By.xpath(String.format("%s//span[@class='ty-price-num'][1]",discountXPath)));
-            for(int j =0; j < elementsName.size(); j++){
+        for (int i = 0; i < pages; i++) {
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(String.format("//span[@class='ty-pagination__selected'][text()='%s']", i + 1))));
+            List<WebElement> elementsName = driver.findElements(By.xpath(String.format("%s//div[@class='ut2-gl__name']", discountXPath)));
+            List<WebElement> elementsDiscount = driver.findElements(By.xpath(String.format("%s//div[@class='ty-product-labels__content']/em", discountXPath)));
+            List<WebElement> elementsOldPrice = driver.findElements(By.xpath(String.format("%s//span[@class='ty-strike']//span[contains(@id, \"sec\")]", discountXPath)));
+            List<WebElement> elementsPrice = driver.findElements(By.xpath(String.format("%s//span[@class='ty-price-num'][1]", discountXPath)));
+            for (int j = 0; j < elementsName.size(); j++) {
                 String name = elementsName.get(j).getText();
                 String oldPriceStr = elementsOldPrice.get(j).getText().replace(",", "");
                 double oldPrice = Double.parseDouble(oldPriceStr);
                 String priceStr = elementsPrice.get(j).getText().replace(",", "");
                 double price = Double.parseDouble(priceStr);
-                items.add(new Item(name, oldPrice-price));
+                String discountStr = elementsDiscount.get(j).getText().replace("%", "");
+                int discount = Integer.parseInt(discountStr);
+                items.add(new Item(name, oldPrice, price, discount));
             }
             WebElement nextPageButton = driver.findElement(By.className("ty-pagination__right-arrow"));
             wait.until(ExpectedConditions.visibilityOf(nextPageButton));
             nextPageButton.click();
         }
-
-        for(Item item: items){
-            System.out.println("Item name:  " + item.getName());
-            System.out.println("Changed price with discount: " + item.getPriceChange());
+        List<Item> randItems = RandomElement.randomElementsNoRepeat(items, 10);
+        for (Item item : items) {
+            double guessPrice = item.getOldPrice() * (100 - item.getDiscount())/100;
+            double realPrice = item.getNewPrice();
+            String name = item.getName();
+            Assert.assertEquals(guessPrice, realPrice, name);
         }
+
     }
 
     @AfterTest
