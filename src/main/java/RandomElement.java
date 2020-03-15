@@ -11,6 +11,7 @@ public class RandomElement {
     public static <T> List<T> randomElementsNoRepeat(List<T> givenList, int numberOfElements) {
         List<T> newElements = new LinkedList<>();
         rand = new Random();
+        if (givenList.size() < numberOfElements) numberOfElements = givenList.size();
         for (int i = 0; i < numberOfElements; i++) {
             int randomIndex = rand.nextInt(givenList.size());
             newElements.add(givenList.get(randomIndex));
@@ -19,16 +20,16 @@ public class RandomElement {
         return newElements;
     }
 
-    public static WebElement randomElement(List<WebElement> givenList){
+    public static WebElement randomElement(List<WebElement> givenList) {
         rand = new Random();
         return givenList.get(rand.nextInt(givenList.size()));
     }
 
-    public static WebElement randElementNoRepeat(List<WebElement> givenList){
+    public static WebElement randElementNoRepeat(List<WebElement> givenList) {
         List<WebElement> newElements = randomElementsNoRepeat(givenList, givenList.size());
-        for(WebElement element : newElements){
+        for (WebElement element : newElements) {
             String name = element.getAttribute("name");
-            if(isNoRepeat(name)){
+            if (isNoRepeat(name)) {
                 elementsChecked.add(name);
                 return element;
             }

@@ -8,13 +8,12 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 
 
 @Test
@@ -25,9 +24,10 @@ public class MainClass {
 
 
     @BeforeTest
-    public void before() {
-        System.setProperty("webdriver.gecko.driver", "C:\\Users\\user\\IdeaProjects\\TestingShoptool\\drivers\\geckodriver.exe");
-        System.setProperty("webdriver.chrome.driver", "C:\\Users\\user\\IdeaProjects\\TestingShoptool\\drivers\\chromedriver.exe");
+    @Parameters({"chromeDriver","geckoDriver"})
+    public void before(@Optional("drivers\\chromedriver.exe") String chromeDriver,@Optional("drivers\\geckodriver.exe") String geckoDriver) {
+        System.setProperty("webdriver.gecko.driver", geckoDriver);
+        System.setProperty("webdriver.chrome.driver", chromeDriver);
         driver = new ChromeDriver();
         driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS)
                 .setScriptTimeout(15, TimeUnit.SECONDS);
@@ -37,8 +37,8 @@ public class MainClass {
     }
 
     @Test
-    public void firstTest() {
-        int numberOfItems = 3;
+    @Parameters("numberOfItems")
+    public void firstTest(@Optional("3") int numberOfItems) {
         driver.get("https://shoptool.com.ua/");
         WebElement element = driver.findElement(By.partialLinkText("Электроинструмент"));
         actions.moveToElement(element).build().perform();
@@ -50,6 +50,7 @@ public class MainClass {
                 wait.until(condition);
                 List<WebElement> discountElements = driver.findElements(By.xpath(elementsXPath));
                 WebElement nextElement = RandomElement.randElementNoRepeat(discountElements);
+                System.out.println(discountElements.size());
                 if (nextElement == null) break;
                 wait.until(ExpectedConditions.elementToBeClickable(nextElement));
                 nextElement.click();
@@ -58,7 +59,6 @@ public class MainClass {
                 Assert.assertEquals(discount.size(), 1, "No element there");
                 driver.navigate().back();
             }
-
             WebElement nextPageButton = driver.findElement(By.className("ty-pagination__right-arrow"));
             wait.until(ExpectedConditions.elementToBeClickable(nextPageButton));
             nextPageButton.click();
@@ -108,13 +108,9 @@ public class MainClass {
         Assert.assertNotEquals(total, newTotal);
     }
 
-    //    Перейти в раздел "Электроинструменты" / "Шуруповерты"
-//    Вывести "Наименование" всех товаров у которых есть тикет "Makita"
-//    Проверить что тикет "Makita" только у товаров в наименовании которых есть слово "Makita" Делаем для 1, 3, 5-й страничек
-//    Переходим в карточку одного из товаров "Makita" и проверяем Bread crumbs
     @Test
-    public void thirdTest() {
-        String ticket = "INTERTOOL";
+    @Parameters("ticket")
+    public void thirdTest(@Optional("INTERTOOL") String ticket) {
         List<WebElement> webElements = null;
         driver.get("https://shoptool.com.ua/");
         WebElement element = driver.findElement(By.partialLinkText("Электроинструмент"));
@@ -129,12 +125,9 @@ public class MainClass {
             if (webElements.size() > 0) {
                 for (WebElement el : webElements) {
                     String itemName = el.getText();
-                    System.out.println(itemName);
                     Assert.assertTrue(itemName.contains(ticket));
                 }
             }
-//            WebElement pagPage = driver.findElement(By.xpath("//span[@class='ty-pagination__selected']"));
-//            System.out.println(pagPage.getText());
             if (page != 5) {
                 WebElement nextPage = driver.findElement(By.xpath(String.format("//div[@class='ty-pagination__items']/a[@data-ca-page='%s']", page + 2)));
                 wait.until(ExpectedConditions.elementToBeClickable(nextPage));
@@ -142,16 +135,15 @@ public class MainClass {
             }
         }
         for (int i = 0; i < 3; i++) {
-            webElements = driver.findElements(By.xpath(String.format("//div[@id='categories_view_pagination_contents']//img[@alt='%s']/ancestor::form//div[@class='ut2-gl__name']", ticket)));
+            webElements = driver.findElements(By.xpath(String.format("//div[@id='categories_view_pagination_contents']//img[@alt='%s']/ancestor::div[@class=\"ut2-gl__image\"]/a[1]", ticket)));
             if (webElements.size() == 0) {
                 driver.navigate().back();
-                if (i == 2) Assert.fail("No Such elements");
+                   if (i == 2) Assert.fail("No Such elements");
             } else break;
         }
         webElements.get(0).click();
-        System.out.println(driver.findElement(By.xpath("//div[contains(@class,\"breadcrumbs\")]")).getText());
         List<WebElement> breadCrumbs = driver.findElements(By.xpath("//div[contains(@class,\"breadcrumbs\")]/a"));
-        Assert.assertTrue(breadCrumbs.size() > 0);
+        Assert.assertTrue(breadCrumbs.size() > 3);
         Assert.assertEquals(breadCrumbs.get(0).getText(), "Главная");
         Assert.assertEquals(breadCrumbs.get(1).getText(), "Каталог");
         Assert.assertEquals(breadCrumbs.get(2).getText(), "Электроинструмент");
@@ -161,7 +153,8 @@ public class MainClass {
     }
 
     @Test
-    public void fourthTest() {
+    @Parameters("numberOfElements")
+    public void fourthTest(@Optional("10") int numberOfElements) {
         List<Item> items = new LinkedList<>();
         String discountXPath = "//div[@id='categories_view_pagination_contents']//div[text()='Aкция']/ancestor::form";
         driver.get("https://shoptool.com.ua/");
@@ -185,12 +178,15 @@ public class MainClass {
                 int discount = Integer.parseInt(discountStr);
                 items.add(new Item(name, oldPrice, price, discount));
             }
-            WebElement nextPageButton = driver.findElement(By.className("ty-pagination__right-arrow"));
-            wait.until(ExpectedConditions.visibilityOf(nextPageButton));
-            nextPageButton.click();
+            if(i<3) {
+                WebElement nextPageButton = driver.findElement(By.className("ty-pagination__right-arrow"));
+                wait.until(ExpectedConditions.visibilityOf(nextPageButton));
+                nextPageButton.click();
+            }
         }
-        List<Item> randItems = RandomElement.randomElementsNoRepeat(items, 10);
-        for (Item item : items) {
+
+        List<Item> randItems = RandomElement.randomElementsNoRepeat(items, numberOfElements);
+        for (Item item : randItems) {
             double guessPrice = item.getOldPrice() * (100 - item.getDiscount())/100;
             double realPrice = item.getNewPrice();
             String name = item.getName();

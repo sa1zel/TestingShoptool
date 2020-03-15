@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="simple_suite">
+
+    <parameter name="global_count" value="10" />
+
+    <test name="calc">
+        <parameter name="geckoDriver"  value="C:\Users\user\IdeaProjects\TestingShoptool\drivers\geckodriver.exe" />
+        <parameter name="chromeDriver"  value="C:\Users\user\IdeaProjects\TestingShoptool\drivers\chromedriver.exe" />
+        <parameter name="numberOfItems"  value="3" />
+        <parameter name="ticket"  value="INTERTOOL" />
+        <parameter name="numberOfElements"  value="10" />
+        <classes>
+            <class name="MainClass"/>
+        </classes>
+    </test>
+
+</suite>
